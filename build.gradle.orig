@@ -1,0 +1,101 @@
+
+
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    java2wsdl
+}
+
+dependencies {
+    java2wsdl "org.apache.cxf:cxf-tools-wsdlto-core:2.7.0"
+    java2wsdl "org.apache.cxf:cxf-tools-wsdlto-frontend-jaxws:2.7.0"
+    java2wsdl "org.apache.cxf:cxf-tools-wsdlto-databinding-jaxb:2.7.0"
+}
+
+def java2wsdl = task generateJavaFromWsdl(type: JavaExec) {
+    def wsdl = file('RemoteClaimManagerService.xml') // 'src/main/resources/wsdl/service.wsdl')
+    def genSrcDir = file("${projectDir}/generated-sources")
+
+    inputs.file  wsdl
+    outputs.dir genSrcDir
+
+    classpath configurations.java2wsdl
+    main "org.apache.cxf.tools.wsdlto.WSDLToJava"
+
+    args '-d', genSrcDir.toString(), wsdl.toString()
+
+    def byteArrayOutputStream = new org.apache.commons.io.output.ByteArrayOutputStream()
+    errorOutput = new org.apache.commons.io.output.TeeOutputStream(System.err, byteArrayOutputStream)
+    doLast {
+        def str = byteArrayOutputStream.toString()
+        if (str.contains('Usage : wsdl2java') || str.contains('WSDLToJava Error')) {
+            throw new TaskExecutionException(
+                    tasks[name],
+                    new IOException("WSDLToJava has failed. Please see output")
+            )
+        }
+    }
+}
+compileJava.dependsOn += java2wsdl
+compileJava.source java2wsdl.outputs.files, sourceSets.main.java
+
+
+
+
+repositories {
+    mavenCentral()
+}
+
+
+configurations {
+    java2wsdlAxis
+}
+
+dependencies {
+    java2wsdlAxis 'org.apache.axis2:axis2:1.6.2'
+    java2wsdlAxis 'org.apache.axis2:axis2-xmlbeans:1.6.2'
+    java2wsdlAxis 'org.apache.xmlbeans:xmlbeans:2.6.0'
+}
+
+
+
+
+def java2wsdlWithAxis = task generateJavaFromWsdlWithAxis(type: JavaExec) {
+    def wsdl = file('RemoteClaimManagerService.modified.xml') // 'src/main/resources/wsdl/service.wsdl')
+    def genSrcDir = file("${projectDir}/generated-sources-axis")
+	def databindingName = 'adb' // specify the binding type - xmlbeans, adb, or jibx
+	def packageName = 'my.wsdl'
+
+    inputs.file  wsdl
+    outputs.dir genSrcDir
+
+    classpath configurations.java2wsdlAxis
+    main "org.apache.axis2.wsdl.WSDL2Java"
+
+	args '-d', databindingName,
+		'-uri', wsdl.toString(),
+		'-o', genSrcDir.toString(),
+		'-p', packageName
+		'-or'
+// '-ss',
+// '-g',
+// '-sd',
+
+
+
+    def byteArrayOutputStream = new org.apache.commons.io.output.ByteArrayOutputStream()
+    errorOutput = new org.apache.commons.io.output.TeeOutputStream(System.err, byteArrayOutputStream)
+    doLast {
+        def str = byteArrayOutputStream.toString()
+        if (str.contains('Usage : wsdl2java') || str.contains('WSDLToJava Error')) {
+            throw new TaskExecutionException(
+                    tasks[name],
+                    new IOException("WSDLToJava has failed. Please see output")
+            )
+        }
+    }
+}
+

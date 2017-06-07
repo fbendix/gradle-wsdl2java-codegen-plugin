@@ -1,0 +1,89 @@
+//buildscript {
+//    repositories {
+//        maven {
+//            url "https://plugins.gradle.org/m2/"
+//        }
+//    }
+//    dependencies {
+//        classpath "com.gradle.publish:plugin-publish-plugin:0.9.3"
+//    }
+//}
+
+apply plugin: 'groovy'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+//apply plugin: "com.gradle.plugin-publish"
+
+def GradleWsdl2javaCodegenPluginGroupId = 'at.bendix.gradle'
+def GradleWsdl2javaCodegenPluginVersion = '0.1.0'
+def GradleWsdl2javaCodegenPluginArtifact = 'gradle-wsdl2java-codegen-plugin'
+def GradleWsdl2javaCodegenPluginUrl = 'https://github.com/riiid/gradle-wsdl2java-codegen-plugin'
+
+//pluginBundle {
+//    website = GradleWsdl2javaCodegenPluginUrl
+//    vcsUrl = GradleWsdl2javaCodegenPluginUrl
+//    description = 'Gradle plugin for wsdl2java codegen releases'
+//    tags = ['wsdl2java-codegen', 'gradle', 'release', 'releases']
+//
+//    plugins {
+//        greetingsPlugin {
+//            id = 'co.riiid.gradle'
+//            displayName = 'Gradle plugin for wsdl2java codegen releases'
+//        }
+//    }
+//}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from 'build/docs/groovydoc'
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+publishing {
+    repositories {
+        maven {
+            // change to point to your repo, e.g. http://my.org/repo
+            url "$buildDir/repo"
+        }
+    }
+    publications {
+        GradleWsdl2javaCodegenPluginPublish(MavenPublication) {
+            from components.java
+            groupId GradleWsdl2javaCodegenPluginGroupId
+            artifactId GradleWsdl2javaCodegenPluginArtifact
+            version GradleWsdl2javaCodegenPluginVersion
+
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
+}
+
+
+
+group GradleWsdl2javaCodegenPluginGroupId
+version GradleWsdl2javaCodegenPluginVersion
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+    compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
+    compile 'org.zeroturnaround:zt-zip:1.8'
+    compile "commons-io:commons-io:2.4"
+
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
